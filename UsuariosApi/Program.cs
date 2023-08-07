@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Services;
+using UsuariosApi.Authorization;
 using UsuariosApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,12 +24,25 @@ builder.Services.AddIdentity<Usuario, IdentityRole>()
 
 builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.GetTempPath()));
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+builder.Services.AddSingleton<IAuthorizationHandler, IdadeAuthorization>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("IdadeMinima", policy =>
+        policy.AddRequirements(new IdadeMinima(18))
+        );
+});
+
 builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<TokenService>();
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
 
 var app = builder.Build();
 
